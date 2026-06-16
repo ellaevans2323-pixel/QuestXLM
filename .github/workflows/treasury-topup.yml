@@ -1,0 +1,28 @@
+name: Treasury Top-Up
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # daily at midnight UTC
+  workflow_dispatch:       # allow manual trigger
+
+jobs:
+  topup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm ci
+        working-directory: scripts
+
+      - name: Fund treasury
+        env:
+          ADMIN_SECRET:  ${{ secrets.ADMIN_SECRET }}
+          CONTRACT_ID:   ${{ secrets.CONTRACT_ID }}
+          TOPUP_AMOUNT:  ${{ vars.TOPUP_AMOUNT || '10000000' }}   # stroops
+          RPC_URL:       ${{ vars.RPC_URL || 'https://soroban-testnet.stellar.org' }}
+        run: node scripts/fund-treasury.js
